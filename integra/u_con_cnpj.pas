@@ -1,0 +1,267 @@
+unit u_con_cnpj;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ExtCtrls, StdCtrls, Buttons,
+  ACBrBase, ACBrSocket, ACBrConsultaCNPJ, Mask;
+
+{$IFDEF CONDITIONALEXPRESSIONS}
+   {$IF CompilerVersion >= 20.0}
+     {$DEFINE DELPHI2009_UP}
+   {$IFEND}
+{$ENDIF}
+
+type
+  Tfrm_CON_CNPJ = class(TForm)
+    Panel2: TPanel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label5: TLabel;
+    Label6: TLabel;
+    Label7: TLabel;
+    Label8: TLabel;
+    Label9: TLabel;
+    Label10: TLabel;
+    Label11: TLabel;
+    Label12: TLabel;
+    EditTipo: TEdit;
+    EditRazaoSocial: TEdit;
+    EditAbertura: TEdit;
+    EditEndereco: TEdit;
+    EditNumero: TEdit;
+    EditComplemento: TEdit;
+    EditBairro: TEdit;
+    EditCidade: TEdit;
+    EditUF: TEdit;
+    EditCEP: TEdit;
+    EditSituacao: TEdit;
+    Panel1: TPanel;
+    Label1: TLabel;
+    ButBuscar: TBitBtn;
+    EditCaptcha: TEdit;
+    Label14: TLabel;
+    Timer1: TTimer;
+    EditFantasia: TEdit;
+    Label13: TLabel;
+    ACBrConsultaCNPJ1: TACBrConsultaCNPJ;
+    EditCNPJ: TMaskEdit;
+    Panel3: TPanel;
+    Image1: TImage;
+    LabAtualizarCaptcha: TLabel;
+    ckRemoverEspacosDuplos: TCheckBox;
+    ListCNAE2: TListBox;
+    Label15: TLabel;
+    EditCNAE1: TEdit;
+    Label16: TLabel;
+    EditEmail: TEdit;
+    Label17: TLabel;
+    EditTelefone: TEdit;
+    Label18: TLabel;
+    BitBtn1: TBitBtn;
+    procedure LabAtualizarCaptchaClick(Sender: TObject);
+    procedure ButBuscarClick(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure EditCaptchaKeyPress(Sender: TObject; var Key: Char);
+    procedure BitBtn1Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frm_CON_CNPJ: Tfrm_CON_CNPJ;
+
+implementation
+
+uses
+  JPEG
+{$IFDEF DELPHI2009_UP}
+  , pngimage
+{$ENDIF}
+  , u_dados;
+
+{$R *.dfm}
+
+function ClrDig(fField : String): String;
+var
+  I : Byte;
+begin
+  Result := '';
+  for I := 1 To Length(fField) do
+     if fField [I] In ['1','2','3','4','5','6','7','8','9','0'] Then
+       Result := Result + fField [I];
+end;
+
+function tiramascara(num: String; tipo: Integer): string;
+begin
+  if tipo = 1 then
+    begin
+      Result := trim(copy(num,1,3)+copy(num,5,3)+copy(num,9,3)+copy(num,13,2));   //999.999.999-99
+    end;
+  if tipo = 2 then
+    begin
+      Result := copy(num,1,2)+copy(num,4,2)+copy(num,7,4); // 99/99/9999
+    end;
+  if tipo = 3 then
+    begin
+      Result := copy(num,1,5)+copy(num,7,3);  //99999-999
+    end;
+  if tipo = 4 then
+    begin
+      Result := copy(num,2,2)+copy(num,6,3)+copy(num,10,4);  //(64) 453-8883
+    end;
+  if tipo = 5 then
+    begin
+      Result := copy(num,1,2)+copy(num,4,3)+copy(num,8,3)+copy(num,12,4)+copy(num,17,2);  //00.000.000/0000-00
+    end;
+end;
+
+procedure Tfrm_CON_CNPJ.BitBtn1Click(Sender: TObject);
+begin
+//dm_dados.cds_VDCLIENTE.Active:=true;
+//dm_dados.cds_VDCLIENTE.open;
+
+{frm_cad_clientes.show;
+frm_cad_clientes.btn_NOVOClick(Sender);
+frm_cad_clientes.edt_razcli.Text:=EditRazaoSocial.Text;
+frm_cad_clientes.edt_nomecli.Text:=EditFantasia.Text;
+frm_CAD_CLIENTES.edt_endcli.Text:=EditEndereco.Text;
+frm_CAD_CLIENTES.edt_numcli.Text:=EditNumero.Text;
+frm_CAD_CLIENTES.edt_complcli.Text:=EditComplemento.Text;
+frm_CAD_CLIENTES.edt_baircli.Text:=EditBairro.Text;
+frm_CAD_CLIENTES.edt_cidcli.Text:=EditCidade.Text;
+frm_CAD_CLIENTES.msk_cepcli.Text:=EditCEP.Text;
+frm_cad_clientes.btn_CEPClick(Sender);
+frm_cad_clientes.edt_emailcli.Text:=editemail.Text;}
+
+//frm_cad_clientes.dbedit2.Text:=EditRazaoSocial.Text;
+
+{frm_cad_clientes.msk_cnpjcli.Text:=ClrDig(EditCNPJ.Text);}
+
+end;
+
+procedure Tfrm_CON_CNPJ.ButBuscarClick(Sender: TObject);
+var
+  I: Integer;
+begin
+  if EditCaptcha.Text <> '' then
+  begin
+    if ACBrConsultaCNPJ1.Consulta(
+      EditCNPJ.Text,
+      EditCaptcha.Text,
+      ckRemoverEspacosDuplos.Checked
+    ) then
+    begin
+      EditTipo.Text        := ACBrConsultaCNPJ1.EmpresaTipo;
+      EditRazaoSocial.Text := ACBrConsultaCNPJ1.RazaoSocial;
+      EditAbertura.Text    := DateToStr( ACBrConsultaCNPJ1.Abertura );
+      EditFantasia.Text    := ACBrConsultaCNPJ1.Fantasia;
+      EditEndereco.Text    := ACBrConsultaCNPJ1.Endereco;
+      EditNumero.Text      := ACBrConsultaCNPJ1.Numero;
+      EditComplemento.Text := ACBrConsultaCNPJ1.Complemento;
+      EditBairro.Text      := ACBrConsultaCNPJ1.Bairro;
+      EditComplemento.Text := ACBrConsultaCNPJ1.Complemento;
+      EditCidade.Text      := ACBrConsultaCNPJ1.Cidade;
+      EditUF.Text          := ACBrConsultaCNPJ1.UF;
+      EditCEP.Text         := ACBrConsultaCNPJ1.CEP;
+      EditSituacao.Text    := ACBrConsultaCNPJ1.Situacao;
+      EditCNAE1.Text       := ACBrConsultaCNPJ1.CNAE1;
+      EditEmail.Text       := ACBrConsultaCNPJ1.EndEletronico;
+      EditTelefone.Text    := ACBrConsultaCNPJ1.Telefone;
+
+      ListCNAE2.Clear;
+      for I := 0 to ACBrConsultaCNPJ1.CNAE2.Count - 1 do
+        ListCNAE2.Items.Add(ACBrConsultaCNPJ1.CNAE2[I]);
+    end;
+  end
+  else
+  begin
+    ShowMessage('É necessário digitar o captcha.');
+    EditCaptcha.SetFocus;
+  end;
+end;
+
+procedure Tfrm_CON_CNPJ.EditCaptchaKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+    ButBuscarClick(ButBuscar);
+end;
+
+procedure Tfrm_CON_CNPJ.FormShow(Sender: TObject);
+begin
+  Timer1.Enabled:= True;
+end;
+
+procedure Tfrm_CON_CNPJ.LabAtualizarCaptchaClick(Sender: TObject);
+var
+  Stream: TMemoryStream;
+//  Jpg: TJPEGImage;
+{$IFDEF DELPHI2009_UP}
+  png: TPngImage;
+{$ENDIF}
+begin
+  Stream:= TMemoryStream.Create;
+  try
+    ACBrConsultaCNPJ1.Captcha(Stream);
+
+  {$IFDEF DELPHI2009_UP}
+    //Use esse código quando a imagem do site for do tipo PNG
+    png:= TPngImage.Create;
+    try
+      png.LoadFromStream(Stream);
+      Image1.Picture.Assign(png);
+
+      EditCaptcha.Clear;
+      EditCaptcha.SetFocus;
+    finally
+      png.Free;
+    end;
+  {$ELSE}
+    ShowMessage('Atenção: Seu Delphi não dá suporte nativo a imagens PNG. Queira verificar o código fonte deste exemplo para saber como proceder.');
+    // COMO PROCEDER:
+    // 
+    // 1) Caso o site da receita esteja utilizando uma imagem do tipo JPG, você pode utilizar o código comentado abaixo. 
+    //    * Comente ou apague o código que trabalha com PNG, incluindo o IFDEF/ENDIF;
+    //    * descomente a declaração da variável jpg 
+    //    * descomente o código abaixo;
+    // 2) Caso o site da receita esteja utilizando uma imagem do tipo PNG, você terá que utilizar uma biblioteca de terceiros para 
+    //conseguir trabalhar com imagens PNG.
+    //  Neste caso, recomendamos verificar o manual da biblioteca em como fazer a implementação. Algumas sugestões:
+    //    * Procure no Fórum do ACBr sobre os erros que estiver recebendo. Uma das maneiras mais simples está no link abaixo:
+    //      - http://www.projetoacbr.com.br/forum/topic/20087-imagem-png-delphi-7/
+    //    * O exemplo acima utiliza a biblioteca GraphicEX. Mas existem outras bibliotecas, caso prefira:
+    //      - http://synopse.info/forum/viewtopic.php?id=115
+    //      - http://graphics32.org/wiki/
+    //      - http://cc.embarcadero.com/Item/25631
+    //      - Várias outras: http://torry.net/quicksearchd.php?String=png&Title=Yes
+  {$ENDIF}
+
+    //Use esse código quando a imagem do site for do tipo JPG
+    //Jpg:= TJPEGImage.Create;
+    //try
+    //  Jpg.LoadFromStream(Stream);
+    //  Image1.Picture.Assign(Jpg);
+    //   //    EditCaptcha.Clear;
+    //  EditCaptcha.SetFocus;
+    //finally
+    //  Jpg.Free;
+    //end;
+
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure Tfrm_CON_CNPJ.Timer1Timer(Sender: TObject);
+begin
+  Timer1.Enabled:= False;
+  LabAtualizarCaptchaClick(LabAtualizarCaptcha);
+  EditCNPJ.SetFocus;
+end;
+
+end.
